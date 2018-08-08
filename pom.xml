@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.aimprosoft</groupId>
+    <artifactId>cucumber-parallel</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>Cucumber-serenity-parallel</name>
+    <description>Sample Serenity project using Cucumber and WebDriver in parallel</description>
+
+    <organization>
+        <name>Aimprosoft</name>
+        <url>https://www.aimprosoft.com/</url>
+    </organization>
+
+    <properties>
+        <!--Parallel-->
+        <count.of.threads>1C</count.of.threads>
+        <!-- One of [SCENARIO, FEATURE]. SCENARIO generates one runner per scenario.-->
+        <!-- FEATURE generates a runner per feature.-->
+        <parallel.scheme>SCENARIO</parallel.scheme>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <encoding>UTF-8</encoding>
+        <serenity.version>1.7.4</serenity.version>
+        <serenity.cucumber.version>1.6.4</serenity.cucumber.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>net.serenity-bdd</groupId>
+            <artifactId>serenity-core</artifactId>
+            <version>${serenity.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.serenity-bdd</groupId>
+            <artifactId>serenity-cucumber</artifactId>
+            <version>${serenity.cucumber.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.7.7</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.19.1</version>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.20</version>
+                <configuration>
+                    <includes>
+                        <include>**/*IT.java</include>
+                    </includes>
+                    <forkCount>${count.of.threads}</forkCount>
+                    <reuseForks>true</reuseForks>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.github.temyers</groupId>
+                <artifactId>cucumber-jvm-parallel-plugin</artifactId>
+                <version>4.2.0</version>
+                <executions>
+                    <execution>
+                        <id>generateRunners</id>
+                        <phase>generate-test-sources</phase>
+                        <goals>
+                            <goal>generateRunners</goal>
+                        </goals>
+                        <configuration>
+                            <!-- Mandatory -->
+                            <!-- List of package names to scan for glue code. -->
+                            <glue>
+                                <package>com.aimprosoft.steps</package>
+                            </glue>
+                            <!-- The directory, which must be in the root of the runtime classpath, containing your feature files.  -->
+                            <featuresDirectory>src/test/resources/features/</featuresDirectory>
+                            <parallelScheme>${parallel.scheme}</parallelScheme>
+                            <!-- Specify a custom template for the generated sources (this is a path relative to the project base directory) -->
+                            <customVmTemplate>src/test/resources/cucumber-serenity-runner.vm</customVmTemplate>
+                            <!-- The directory, which must be in the root of the runtime classpath, containing your feature files.  -->
+                            <featuresDirectory>src/test/resources/features/</featuresDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.2</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>net.serenity-bdd.maven.plugins</groupId>
+                <artifactId>serenity-maven-plugin</artifactId>
+                <version>${serenity.version}</version>
+                <executions>
+                    <execution>
+                        <id>serenity-reports</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>aggregate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

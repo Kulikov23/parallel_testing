@@ -1,0 +1,55 @@
+variables:
+  PARALLEL_THREADS:         "2"
+  PARALLEL_SCHEME:          "SCENARIO"
+
+stages:
+  - functional_test
+  - publish
+
+#Job for executing functional tests
+tests_execution:
+  image: tsmaggot/docker-pipeline-chrome
+#Save .m2 cache to decrease tests execution time
+  cache:
+   paths:
+     - .m2/
+  before_script:
+#Run tests under Xvfb
+    - Xvfb :99 &
+    - export DISPLAY=:99
+#Replace maven config to let maven knows where cache is
+    - echo '<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                        xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                                https://maven.apache.org/xsd/settings-1.0.0.xsd">
+                    <localRepository>'$PWD'.m2</localRepository>
+              </settings>' > $HOME/.m2/settings.xml
+  stage: functional_test
+  script:
+#  Run tests using maven if the branch is master, if not just compile code
+     - mvn clean verify -Dcount.of.threads=$PARALLEL_THREADS -Dparallel.scheme=$PARALLEL_SCHEME
+  artifacts:
+    when: always
+    paths:
+      - target/site/serenity/
+    expire_in: 30 minute
+  allow_failure: true
+
+pages:
+  stage: publish
+  script:
+#  Make public dir for the first run
+    - mkdir -p public
+#    remove the old report for current branch
+    - rm -rfv public/$CI_COMMIT_REF_NAME
+#    create a folder for current branch where the report is stored
+    - mkdir -p public/$CI_COMMIT_REF_NAME
+#    move new report from  artifacts folder to pages folder
+    - mv target/site/serenity/* public/$CI_COMMIT_REF_NAME
+  cache:
+    paths:
+      - public
+  artifacts:
+    paths:
+      - public
+    expire_in: 30 minute
